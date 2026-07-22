@@ -1,0 +1,49 @@
+name: CrowdWorks short video watcher
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: crowdworks-short-video-watcher
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Restore notification database
+        uses: actions/cache/restore@v4
+        with:
+          path: data
+          key: crowdworks-notified-${{ github.run_id }}
+          restore-keys: |
+            crowdworks-notified-
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run watcher
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          DB_PATH: data/notified_jobs.sqlite
+          MIN_AMOUNT_YEN: "3000"
+          LOG_LEVEL: INFO
+          ALLOW_ON_ROBOTS_UNAVAILABLE: "false"
+        run: python main.py
+
+      - name: Save notification database
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data
+          key: crowdworks-notified-${{ github.run_id }}
