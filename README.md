@@ -76,9 +76,18 @@ python main.py
 
 SQLite の通知履歴は初期設定で `data/notified_jobs.sqlite` に保存されます。同じ案件 ID または URL は 2 回通知されません。
 
-## GitHub Actions で 5 分ごとに実行する
+## GitHub Actions で毎日9時と18時に実行する
 
-`.github/workflows/crowdworks-watch.yml` は `*/5 * * * *` で設定済みです。
+`.github/workflows/crowdworks-watch.yml` は日本時間の毎日 9:00 と 18:00 に実行する設定です。
+
+GitHub Actions の schedule は UTC 基準なので、cron は次のように設定しています。
+
+```yaml
+cron: "0 0,9 * * *"
+```
+
+- 00:00 UTC = 09:00 JST
+- 09:00 UTC = 18:00 JST
 
 GitHub Actions に Webhook URL を登録します。
 
@@ -94,7 +103,6 @@ Actions では SQLite の `data/` を GitHub Actions cache に保存して、過
 
 注意点:
 
-- GitHub Actions の schedule は最低 5 分間隔です。
 - 実際の起動は GitHub 側の混雑で数分以上遅れることがあります。
 - cache は簡易的な状態保存です。厳密な永続化が必要なら外部 DB を使ってください。
 
